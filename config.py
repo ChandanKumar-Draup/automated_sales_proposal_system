@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # API Keys
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
+    gemini_api_key: Optional[str] = None
 
     # LLM Settings
     default_llm_provider: str = "openai"  # openai or anthropic

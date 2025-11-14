@@ -13,12 +13,33 @@ class EmbeddingService:
         primary_model: str = None,
         use_openai: bool = False,
         openai_model: str = "text-embedding-3-small",
+        use_gemini: bool = False,
+        gemini_model: str = "models/text-embedding-004",
     ):
         """Initialize embedding service."""
         self.use_openai = use_openai
         self.openai_model = openai_model
+        self.use_gemini = use_gemini
+        self.gemini_model = gemini_model
 
-        if use_openai:
+        # Try Gemini first if requested
+        if use_gemini:
+            try:
+                import google.generativeai as genai
+                import os
+
+                api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
+                if not api_key:
+                    raise ValueError("GEMINI_API_KEY not found")
+                genai.configure(api_key=api_key)
+                self.gemini_client = genai
+                print(f"Using Gemini embeddings: {gemini_model}")
+            except Exception as e:
+                print(f"Failed to initialize Gemini: {e}. Falling back to sentence-transformers")
+                self.use_gemini = False
+
+        # Try OpenAI if requested and Gemini not used
+        if use_openai and not self.use_gemini:
             try:
                 from openai import OpenAI
                 import os
@@ -30,7 +51,8 @@ class EmbeddingService:
                 print(f"Failed to initialize OpenAI: {e}. Falling back to sentence-transformers")
                 self.use_openai = False
 
-        if not self.use_openai:
+        # Fall back to sentence-transformers if no API provider is active
+        if not self.use_openai and not self.use_gemini:
             model_name = primary_model or settings.embedding_model
             self.encoder = SentenceTransformer(model_name)
             self.dimension = self.encoder.get_sentence_embedding_dimension()
@@ -38,14 +60,18 @@ class EmbeddingService:
 
     def embed_single(self, text: str) -> np.ndarray:
         """Embed a single text."""
-        if self.use_openai:
+        if self.use_gemini:
+            return self._embed_gemini([text])[0]
+        elif self.use_openai:
             return self._embed_openai([text])[0]
         else:
             return self.encoder.encode(text, convert_to_numpy=True)
 
     def embed_batch(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
         """Embed multiple texts efficiently."""
-        if self.use_openai:
+        if self.use_gemini:
+            return self._embed_gemini(texts)
+        elif self.use_openai:
             return self._embed_openai(texts)
         else:
             return self.encoder.encode(
@@ -68,9 +94,34 @@ class EmbeddingService:
         except Exception as e:
             raise Exception(f"OpenAI embedding failed: {str(e)}")
 
+    def _embed_gemini(self, texts: List[str]) -> np.ndarray:
+        """Generate embeddings using Google Gemini."""
+        try:
+            all_embeddings = []
+
+            # Gemini recommends batching up to 100 texts at a time
+            for i in range(0, len(texts), 100):
+                batch = texts[i : i + 100]
+
+                # Embed each text in the batch
+                for text in batch:
+                    result = self.gemini_client.embed_content(
+                        model=self.gemini_model,
+                        content=text,
+                        task_type="retrieval_document"  # For document embedding
+                    )
+                    all_embeddings.append(result['embedding'])
+
+            return np.array(all_embeddings, dtype=np.float32)
+        except Exception as e:
+            raise Exception(f"Gemini embedding failed: {str(e)}")
+
     def get_dimension(self) -> int:
         """Get embedding dimension."""
-        if self.use_openai:
+        if self.use_gemini:
+            # text-embedding-004: 768 dimensions
+            return 768
+        elif self.use_openai:
             # text-embedding-3-small: 1536, text-embedding-3-large: 3072
             return 1536 if "small" in self.openai_model else 3072
         else:

@@ -155,6 +155,24 @@ dimensions = 3072  # vs 384 for MiniLM
 - Cost: ~$0.06 total (one-time)
 - **Recommendation**: Use for production, worth the quality
 
+#### **Option 4: Google Gemini Embeddings** (Great Alternative)
+
+```python
+# Use Google Gemini's text-embedding-004
+model = "models/text-embedding-004"
+dimensions = 768  # balanced dimensionality
+
+# Pros: High quality, competitive pricing, good performance
+# Cons: API cost, requires internet
+```
+
+**Key Features:**
+- Model: `text-embedding-004` - Latest Gemini embedding model
+- Dimensions: 768 (good balance between quality and size)
+- Task types: Supports retrieval_document, retrieval_query, semantic_similarity
+- Batch processing: Recommended batch size up to 100 texts
+- **Recommendation**: Excellent alternative if you have Gemini API access
+
 ---
 
 ## 🗂️ Metadata Extraction Strategy
@@ -490,8 +508,9 @@ qa_pair = retrieve_with_context(query)
 
 ### **For Hackathon (Next 48 hours):**
 
-1. **Use OpenAI Embeddings** (`text-embedding-3-small`)
-   - Cost: ~$0.02 for entire dataset
+1. **Use OpenAI or Gemini Embeddings**
+   - OpenAI: `text-embedding-3-small` (Cost: ~$0.02 for entire dataset)
+   - Gemini: `models/text-embedding-004` (Alternative with good quality)
    - Quality: 10x better than MiniLM
    - Time saved: No need for fine-tuning
 

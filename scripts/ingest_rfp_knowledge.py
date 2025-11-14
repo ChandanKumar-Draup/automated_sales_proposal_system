@@ -20,14 +20,17 @@ from config import settings
 class RFPKnowledgeIngestion:
     """Batch ingestion pipeline for RFP documents."""
 
-    def __init__(self, use_openai_embeddings: bool = False):
+    def __init__(self, use_openai_embeddings: bool = False, use_gemini_embeddings: bool = False):
         """Initialize ingestion pipeline."""
         print("Initializing RFP Knowledge Ingestion Pipeline...")
 
         self.llm = LLMService()
         self.doc_processor = DocumentProcessor()
         self.metadata_extractor = MetadataExtractor(self.llm)
-        self.embedding_service = EmbeddingService(use_openai=use_openai_embeddings)
+        self.embedding_service = EmbeddingService(
+            use_openai=use_openai_embeddings,
+            use_gemini=use_gemini_embeddings
+        )
         self.vector_store = VectorStore()
         self.chunking = ChunkingStrategy()
 
@@ -242,12 +245,16 @@ def main():
     parser = argparse.ArgumentParser(description="Ingest RFP documents into knowledge base")
     parser.add_argument("--dry-run", action="store_true", help="Preview files without processing")
     parser.add_argument("--use-openai", action="store_true", help="Use OpenAI embeddings (higher quality)")
+    parser.add_argument("--use-gemini", action="store_true", help="Use Google Gemini embeddings (alternative to OpenAI)")
     parser.add_argument("--root-dir", default="resources/RFP_Hackathon", help="Root directory of RFP files")
 
     args = parser.parse_args()
 
     # Run ingestion
-    pipeline = RFPKnowledgeIngestion(use_openai_embeddings=args.use_openai)
+    pipeline = RFPKnowledgeIngestion(
+        use_openai_embeddings=args.use_openai,
+        use_gemini_embeddings=args.use_gemini
+    )
     pipeline.run(root_dir=args.root_dir, dry_run=args.dry_run)
 
 
