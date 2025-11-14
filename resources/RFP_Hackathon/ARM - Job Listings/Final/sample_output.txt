@@ -1,0 +1,76 @@
+[
+  {
+    "about_candidate": "Qualifications, • Bachelor's or Master's degree in Electrical Engineering, Robotics, Mechatronics, or related field., • Proven experience in hardware design and development for robotics or unmanned vehicles., • Proficiency in CAD software and PCB design tools., • Strong understanding of electronic components, circuit design, and signal processing., • Experience with sensors, actuators, and communication protocols (e.g., UART, SPI, I2C)., • Ability to work in a fast-paced, collaborative environment., • Excellent problem-solving skills and attention to detail., • Strong written and verbal communication skills., • Eligibility to obtain and maintain a U.S. security clearance., • Willing and able to travel on an as needed basis to remote test sites throughout the United States., Preferred Qualifications, • Experience with rapid prototyping and iterative design processes., • Knowledge of embedded systems and firmware development., • Familiarity with regulatory standards and compliance for unmanned vehicles., • Hands-on experience with testing and debugging hardware systems.",
+    "about_company": "Anduril Industries is a defense technology company with a mission to transform U.S. and allied military capabilities with advanced technology. By bringing the expertise, technology, and business model of the 21st century's most innovative companies to the defense industry, Anduril is changing how military systems are designed, built and sold. Anduril's family of systems is powered by Lattice OS, an AI-powered operating system that turns thousands of data streams into a realtime, 3D command and control center. As the world enters an era of strategic competition, Anduril is committed to bringing cutting-edge autonomy, AI, computer vision, sensor fusion, and networking technology to the military in months, not years.",
+    "about_job": "We are seeking a highly skilled and motivated Robotics Hardware Engineer to join our Rapid Development Team. In this role, you will be responsible for designing, developing, and integrating electronic components for unmanned vehicles. You will work closely with cross-functional teams to rapidly prototype and iterate on hardware solutions., Design and develop hardware components for unmanned vehicles, including sensors, actuators, and control systems., Integrate electronic components and ensure seamless communication between hardware and software systems., Collaborate with mechanical, software, and systems engineers to prototype and test new hardware solutions., Conduct feasibility studies, simulations, and performance evaluations to optimize hardware designs., Develop and execute test plans to validate hardware functionality and reliability., Identify and troubleshoot hardware issues, implementing effective solutions., Stay current with industry trends and emerging technologies to drive innovation., Document design processes, test results, and maintain detailed engineering records.",
+    "benefits": [
+      "Relocation Assisstance",
+      "Retirement Benefit",
+      "Dental insurance",
+      "Employee Assistance Program",
+      "Extra annual leaves",
+      "Professional training",
+      "Transport allowance",
+      "Vision insurance",
+      "Life insurance",
+      "Other benefits",
+      "Legal insurance",
+      "Free Food",
+      "Disability insurance",
+      "Health Insurance"
+    ],
+    "city": "Costa Mesa",
+    "core_skill": [
+      "Control Systems Design",
+      "Signal Processing",
+      "Firmware",
+      "Feasibility Studies",
+      "Embedded System",
+      "Rapid Prototyping",
+      "Actuator",
+      "Communication Protocols",
+      "Prototyping",
+      "Debugging",
+      "Printed Circuit Board (PCB) Design",
+      "Iterative Design",
+      "Test Planning"
+    ],
+    "country": "United States of America",
+    "date_posted": "2025-07-23T09:46:07.000Z",
+    "draup_company_name": "Anduril Industries",
+    "draup_location": "Greater Los Angeles Area, United States",
+    "education": [
+      "Masters",
+      "Bachelors"
+    ],
+    "id": "adf793d37a6014208a76e9c3535c24f6",
+    "industry": [
+      "Aerospace"
+    ],
+    "job_description": "Anduril Industries is a defense technology company with a mission to transform U.S. and allied military capabilities with advanced technology. By bringing the expertise, technology, and business model of the 21st century's most innovative companies to the defense industry, Anduril is changing how military systems are designed, built and sold. Anduril's family of systems is powered by Lattice OS, an AI-powered operating system that turns thousands of data streams into a realtime, 3D command and control center. As the world enters an era of strategic competition, Anduril is committed to bringing cutting-edge autonomy, AI, computer vision, sensor fusion, and networking technology to the military in months, not years.<br/><br/>The Test and Evaluation team at Anduril is integral to our mission, ensuring that every product meets the highest standards of performance and reliability. Our team specializes in a broad spectrum of testing activities, including developmental testing using surrogate vehicles. We are at the forefront of testing approaches, particularly in the domain of mission autonomy systems. As our team expands, we are seeking a UAS Technician to focus on the challenges of rapid prototyping and contribute to the iterative advancement of Anduril's broad range of autonomous systems.<br/><br/>We are seeking a highly skilled and motivated Robotics Hardware Engineer to join our Rapid Development Team. In this role, you will be responsible for designing, developing, and integrating electronic components for unmanned vehicles. You will work closely with cross-functional teams to rapidly prototype and iterate on hardware solutions.<br/><br/>Key Responsibilities<br/><br/>• Design and develop hardware components for unmanned vehicles, including sensors, actuators, and control systems.<br/>• Integrate electronic components and ensure seamless communication between hardware and software systems.<br/>• Collaborate with mechanical, software, and systems engineers to prototype and test new hardware solutions.<br/>• Conduct feasibility studies, simulations, and performance evaluations to optimize hardware designs.<br/>• Develop and execute test plans to validate hardware functionality and reliability.<br/>• Identify and troubleshoot hardware issues, implementing effective solutions.<br/>• Stay current with industry trends and emerging technologies to drive innovation.<br/>• Document design processes, test results, and maintain detailed engineering records.<br/><br/><br/>Qualifications<br/><br/>• Bachelor's or Master's degree in Electrical Engineering, Robotics, Mechatronics, or related field.<br/>• Proven experience in hardware design and development for robotics or unmanned vehicles.<br/>• Proficiency in CAD software and PCB design tools.<br/>• Strong understanding of electronic components, circuit design, and signal processing.<br/>• Experience with sensors, actuators, and communication protocols (e.g., UART, SPI, I2C).<br/>• Ability to work in a fast-paced, collaborative environment.<br/>• Excellent problem-solving skills and attention to detail.<br/>• Strong written and verbal communication skills.<br/>• Eligibility to obtain and maintain a U.S. security clearance.<br/>• Willing and able to travel on an as needed basis to remote test sites throughout the United States.<br/><br/><br/>Preferred Qualifications<br/><br/>• Experience with rapid prototyping and iterative design processes.<br/>• Knowledge of embedded systems and firmware development.<br/>• Familiarity with regulatory standards and compliance for unmanned vehicles.<br/>• Hands-on experience with testing and debugging hardware systems.<br/><br/><br/>What We Offer<br/><br/>• Competitive salary and benefits package.<br/>• Opportunity to work on groundbreaking technology in the robotics industry.<br/>• Collaborative and innovative work environment.<br/>• Professional development and growth opportunities.<br/><br/><br/>US Salary Range<br/><br/>$120,000—$180,000 USD<br/><br/>Benefits<br/><br/>The salary range for this role is an estimate based on a wide range of compensation factors, inclusive of base salary only. Actual salary offer may vary based on (but not limited to) work experience, education and/or training, critical skills, and/or business considerations. Highly competitive equity grants are included in the majority of full time offers; and are considered part of Anduril's total compensation package. Additionally, Anduril offers top-tier benefits for full-time employees, including:<br/><br/>• Platinum Healthcare Benefits: For U.S. roles, we offer comprehensive medical, dental, and vision plans at little to no cost to you.<br/>• For UK roles, Private Medical Insurance (PMI): Anduril will cover the full cost of the insurance premium for an employee and dependents.<br/>• For AUS roles, Private health plan through Bupa: Coverage is fully subsidized by Anduril.<br/>• Basic Life/AD&D and long-term disability insurance 100% covered by Anduril, plus the option to purchase additional life insurance for you and your dependents.<br/>• Extremely generous company holiday calendar including a holiday hiatus in December, and highly competitive PTO plans.<br/>• 16 weeks of paid Caregiver & Wellness Leave to care for a family member, bond with your baby, or tend to your own medical condition.<br/>• Family Planning & Parenting Support: Fertility (eg, IVF, preservation), adoption, and gestational carrier coverage with additional benefits and resources to provide support from planning to parenting.<br/>• Mental Health Resources: We provide free mental health resources 24/7 including therapy, life coaching, and more. Additional work-life services, such as free legal and financial support, available to you as well.<br/>• A professional development stipend is available to all Andurilians.<br/>• Daily Meals and Provisions: For many of our offices this means breakfast, lunch and fully stocked micro-kitchens.<br/>• Company-funded commuter benefits available based on your region.<br/>• Relocation assistance (depending on role eligibility).<br/>• 401(k) retirement savings plan - both a traditional and Roth 401(k). (US roles only)<br/><br/>The recruiter assigned to this role can share more information about the specific compensation and benefit details associated with this role during the hiring process.<br/><br/>Anduril is an equal-opportunity employer committed to creating a diverse and inclusive workplace. The Anduril team is made up of incredibly talented and unique individuals, who together are disrupting industry norms by creating new paths towards the future of defense technology. All qualified applicants will be treated with respect and receive equal consideration for employment without regard to race, color, creed, religion, sex, gender identity, sexual orientation, national origin, disability, uniform service, Veteran status, age, or any other protected characteristic per federal, state, or local law, including those with a criminal history, in a manner consistent with the requirements of applicable state and local laws, including the CA Fair Chance Initiative for Hiring Ordinance. We actively encourage members of recognized minorities, women, Veterans, and those with disabilities to apply, and we work to create a welcoming and supportive environment for all applicants throughout the interview process. If you are someone passionate about working on problems that have a real-world impact, we'd love to hear from you!<br/><br/>To view Anduril's candidate data privacy policy, please visit https://anduril.com/applicant-privacy-notice/.",
+    "job_level": "None",
+    "job_posting_url": "https://www.linkedin.com/jobs/view/senior-robotics-hardware-engineer-rapid-development-at-anduril-industries-4273987991",
+    "job_responsibilities": [
+      "We are seeking a highly skilled and motivated Robotics Hardware Engineer to join our Rapid Development Team. In this role, you will be responsible for designing, developing, and integrating electronic components for unmanned vehicles. You will work closely with cross-functional teams to rapidly prototype and iterate on hardware solutions., Design and develop hardware components for unmanned vehicles, including sensors, actuators, and control systems., Integrate electronic components and ensure seamless communication between hardware and software systems., Collaborate with mechanical, software, and systems engineers to prototype and test new hardware solutions., Conduct feasibility studies, simulations, and performance evaluations to optimize hardware designs., Develop and execute test plans to validate hardware functionality and reliability., Identify and troubleshoot hardware issues, implementing effective solutions., Stay current with industry trends and emerging technologies to drive innovation., Document design processes, test results, and maintain detailed engineering records."
+    ],
+    "job_title": "Senior Robotics Hardware Engineer - Rapid Development",
+    "job_update_status": 1,
+    "maximum_salary": 180000,
+    "minimum_salary": 120000,
+    "minumum_experience": "Proven experience in hardware design and development for robotics or unmanned vehicles",
+    "normalised_title": "Robotics Specialist",
+    "pay_currency": "USD",
+    "soft_skill": [
+      "Evaluation",
+      "Innovation",
+      "Attention to Detail",
+      "Collaboration",
+      "Conversational Proficiency"
+    ],
+    "source_company_name": "Anduril Industries",
+    "source_location": "Costa Mesa, CA",
+    "state": "California",
+    "job_schedule": null,
+    "zip_code": null
+  }
+]
