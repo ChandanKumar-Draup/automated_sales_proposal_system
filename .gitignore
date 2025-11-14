@@ -30,9 +30,9 @@ data/
 Thumbs.db
 
 # Output files
-*.docx
-*.pdf
-*.xlsx
+# *.docx
+# *.pdf
+# *.xlsx
 outputs/
 uploads/
 
