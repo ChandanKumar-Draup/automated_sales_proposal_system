@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     gemini_api_key: Optional[str] = None
 
     # LLM Settings
-    default_llm_provider: str = "openai"  # openai or anthropic
-    default_model: str = "gpt-4-turbo-preview"
+    default_llm_provider: str = "anthropic"  # openai or anthropic
+    default_model: str = "claude-3-5-haiku-20241022"
     temperature: float = 0.7
     max_tokens: int = 2000
 
