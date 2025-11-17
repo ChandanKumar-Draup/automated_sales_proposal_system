@@ -70,23 +70,18 @@ class LLMService:
                 return response.choices[0].message.content
 
             elif self.provider == "anthropic":
-                # Check if client has messages attribute (new SDK)
-                if hasattr(self.client, 'messages'):
-                    kwargs = {"model": self.model, "max_tokens": tokens, "messages": [{"role": "user", "content": prompt}]}
-                    if system_prompt:
-                        kwargs["system"] = system_prompt
+                # Use the Messages API (modern Anthropic API)
+                kwargs = {
+                    "model": self.model,
+                    "max_tokens": tokens,
+                    "temperature": temp,
+                    "messages": [{"role": "user", "content": prompt}]
+                }
+                if system_prompt:
+                    kwargs["system"] = system_prompt
 
-                    response = self.client.messages.create(**kwargs)
-                    return response.content[0].text
-                else:
-                    # Fallback for older SDK versions
-                    prompt_text = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-                    response = self.client.completions.create(
-                        model=self.model,
-                        max_tokens_to_sample=tokens,
-                        prompt=f"\n\nHuman: {prompt_text}\n\nAssistant:",
-                    )
-                    return response.completion
+                response = self.client.messages.create(**kwargs)
+                return response.content[0].text
 
         except Exception as e:
             raise Exception(f"LLM generation failed: {str(e)}")
