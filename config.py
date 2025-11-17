@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # LLM Settings
     default_llm_provider: str = "anthropic"  # openai or anthropic
-    default_model: str = "claude-3-5-haiku-20241022"
+    default_model: str = "claude-haiku-4-5-20251001"
     temperature: float = 0.7
     max_tokens: int = 2000
 
