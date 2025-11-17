@@ -1,5 +1,5 @@
 """Metadata extraction for RFP documents using LLM."""
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 import re
 from pathlib import Path
