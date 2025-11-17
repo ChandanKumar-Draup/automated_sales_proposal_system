@@ -22,7 +22,7 @@ class VectorStore:
 
     def _load_or_create_index(self):
         """Load existing index or create new one."""
-        os.makedirs(os.path.dirname(self.store_path), exist_ok=True)
+        os.makedirs(self.store_path, exist_ok=True)
 
         index_file = f"{self.store_path}/faiss.index"
         docs_file = f"{self.store_path}/documents.pkl"
@@ -113,7 +113,7 @@ class VectorStore:
         """Save the index to disk."""
         import faiss
 
-        os.makedirs(os.path.dirname(self.store_path), exist_ok=True)
+        os.makedirs(self.store_path, exist_ok=True)
 
         index_file = f"{self.store_path}/faiss.index"
         docs_file = f"{self.store_path}/documents.pkl"
