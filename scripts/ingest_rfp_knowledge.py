@@ -20,11 +20,22 @@ from config import settings
 class RFPKnowledgeIngestion:
     """Batch ingestion pipeline for RFP documents."""
 
-    def __init__(self, use_openai_embeddings: bool = False, use_gemini_embeddings: bool = False):
+    def __init__(self, use_openai_embeddings: bool = False, use_gemini_embeddings: bool = False, use_llm_metadata: bool = True):
         """Initialize ingestion pipeline."""
         print("Initializing RFP Knowledge Ingestion Pipeline...")
 
-        self.llm = LLMService()
+        # Initialize LLM service (optional for metadata extraction)
+        self.llm = None
+        self.use_llm_metadata = use_llm_metadata
+        if use_llm_metadata:
+            try:
+                self.llm = LLMService()
+                print("LLM service initialized for metadata extraction")
+            except Exception as e:
+                print(f"Warning: Could not initialize LLM service: {e}")
+                print("Continuing with heuristic-based metadata extraction only")
+                self.llm = None
+
         self.doc_processor = DocumentProcessor()
         self.metadata_extractor = MetadataExtractor(self.llm)
         self.embedding_service = EmbeddingService(
@@ -246,6 +257,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Preview files without processing")
     parser.add_argument("--use-openai", action="store_true", help="Use OpenAI embeddings (higher quality)")
     parser.add_argument("--use-gemini", action="store_true", help="Use Google Gemini embeddings (alternative to OpenAI)")
+    parser.add_argument("--no-llm-metadata", action="store_true", help="Skip LLM-based metadata extraction (use heuristics only)")
     parser.add_argument("--root-dir", default="resources/RFP_Hackathon", help="Root directory of RFP files")
 
     args = parser.parse_args()
@@ -253,7 +265,8 @@ def main():
     # Run ingestion
     pipeline = RFPKnowledgeIngestion(
         use_openai_embeddings=args.use_openai,
-        use_gemini_embeddings=args.use_gemini
+        use_gemini_embeddings=args.use_gemini,
+        use_llm_metadata=not args.no_llm_metadata
     )
     pipeline.run(root_dir=args.root_dir, dry_run=args.dry_run)
 
