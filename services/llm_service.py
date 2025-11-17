@@ -27,19 +27,15 @@ class LLMService:
                 raise ImportError("openai package not installed")
         elif self.provider == "anthropic":
             try:
-                import anthropic
+                from anthropic import Anthropic
                 api_key = settings.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
                 if not api_key:
                     raise ValueError("Anthropic API key not found")
 
-                # Check if we have the new SDK (0.3.0+)
-                if hasattr(anthropic, 'Anthropic'):
-                    self.client = anthropic.Anthropic(api_key=api_key)
-                else:
-                    # Fallback for older versions
-                    self.client = anthropic.Client(api_key=api_key)
+                # Use the modern Anthropic SDK (0.40.0+)
+                self.client = Anthropic(api_key=api_key)
             except ImportError:
-                raise ImportError("anthropic package not installed. Install with: pip install anthropic>=0.7.0")
+                raise ImportError("anthropic package not installed. Install with: pip install anthropic>=0.40.0")
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
