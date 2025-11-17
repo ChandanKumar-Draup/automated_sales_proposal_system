@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Sales Proposal System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Automated Sales Proposal System</h1>
+            <p class="subtitle">AI-Powered Sales Proposals & RFP Responses</p>
+            <div class="health-status" id="healthStatus">
+                <span class="status-indicator"></span>
+                <span class="status-text">Checking...</span>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="quick-proposal">Quick Proposal</button>
+            <button class="tab" data-tab="rfp-upload">Upload RFP</button>
+            <button class="tab" data-tab="workflows">Workflows</button>
+            <button class="tab" data-tab="knowledge">Knowledge Base</button>
+        </nav>
+
+        <main>
+            <!-- Quick Proposal Tab -->
+            <section id="quick-proposal-tab" class="tab-content active">
+                <div class="card">
+                    <h2>Create Quick Proposal</h2>
+                    <p class="description">Generate a fast proposal for sales outreach</p>
+
+                    <form id="quickProposalForm">
+                        <div class="form-group">
+                            <label for="clientName">Client Name *</label>
+                            <input type="text" id="clientName" name="clientName" required
+                                   placeholder="Enter client company name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="industry">Industry</label>
+                            <input type="text" id="industry" name="industry"
+                                   placeholder="e.g., Healthcare, Finance, Technology">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="requirements">Requirements *</label>
+                            <textarea id="requirements" name="requirements" rows="6" required
+                                      placeholder="Describe what the client needs (e.g., CRM solution, marketing automation, data analytics)"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tone">Tone</label>
+                            <select id="tone" name="tone">
+                                <option value="professional">Professional</option>
+                                <option value="friendly">Friendly</option>
+                                <option value="technical">Technical</option>
+                                <option value="executive">Executive</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="submitQuickProposal">
+                            <span class="btn-text">Generate Proposal</span>
+                            <span class="btn-loader" style="display: none;"></span>
+                        </button>
+                    </form>
+
+                    <div id="quickProposalResult" class="result-box" style="display: none;">
+                        <h3>Proposal Generated!</h3>
+                        <div class="result-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RFP Upload Tab -->
+            <section id="rfp-upload-tab" class="tab-content">
+                <div class="card">
+                    <h2>Upload RFP Document</h2>
+                    <p class="description">Upload and process RFP documents (PDF, DOCX, TXT)</p>
+
+                    <form id="rfpUploadForm">
+                        <div class="form-group">
+                            <label for="rfpClientName">Client Name *</label>
+                            <input type="text" id="rfpClientName" name="rfpClientName" required
+                                   placeholder="Enter client company name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="rfpIndustry">Industry</label>
+                            <input type="text" id="rfpIndustry" name="rfpIndustry"
+                                   placeholder="e.g., Healthcare, Finance, Technology">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="rfpFile">RFP Document *</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="rfpFile" name="rfpFile"
+                                       accept=".pdf,.doc,.docx,.txt" required>
+                                <label for="rfpFile" class="file-input-label">
+                                    <span class="file-icon">📄</span>
+                                    <span class="file-text">Choose file or drag here</span>
+                                </label>
+                                <div class="file-name" id="fileName"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="submitRfpUpload">
+                            <span class="btn-text">Upload & Process RFP</span>
+                            <span class="btn-loader" style="display: none;"></span>
+                        </button>
+                    </form>
+
+                    <div id="rfpUploadResult" class="result-box" style="display: none;">
+                        <h3>RFP Processing Started!</h3>
+                        <div class="result-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Workflows Tab -->
+            <section id="workflows-tab" class="tab-content">
+                <div class="card">
+                    <h2>Workflow Status</h2>
+                    <p class="description">Check the status of your proposals and download results</p>
+
+                    <div class="form-group">
+                        <label for="workflowId">Workflow ID</label>
+                        <div class="input-group">
+                            <input type="text" id="workflowId" name="workflowId"
+                                   placeholder="Enter workflow ID (e.g., WF-20240315-123456)">
+                            <button type="button" class="btn btn-secondary" id="checkWorkflowBtn">
+                                Check Status
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="workflowResult" class="result-box" style="display: none;">
+                        <h3>Workflow Details</h3>
+                        <div class="workflow-details"></div>
+                    </div>
+
+                    <div class="workflow-list">
+                        <h3>Recent Workflows</h3>
+                        <div id="recentWorkflows" class="workflows-container">
+                            <p class="empty-state">No workflows yet. Create a proposal to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Knowledge Base Tab -->
+            <section id="knowledge-tab" class="tab-content">
+                <div class="card">
+                    <h2>Knowledge Base Management</h2>
+                    <p class="description">Add content and search the knowledge base</p>
+
+                    <div class="knowledge-sections">
+                        <!-- Add Knowledge Section -->
+                        <div class="knowledge-section">
+                            <h3>Add Content</h3>
+                            <form id="addKnowledgeForm">
+                                <div class="form-group">
+                                    <label for="knowledgeText">Content *</label>
+                                    <textarea id="knowledgeText" name="knowledgeText" rows="6" required
+                                              placeholder="Enter case studies, past proposals, product information, etc."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="knowledgeMetadata">Metadata (Optional)</label>
+                                    <input type="text" id="knowledgeMetadata" name="knowledgeMetadata"
+                                           placeholder='{"category": "case_study", "industry": "healthcare"}'>
+                                    <small>Enter as JSON object</small>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" id="submitKnowledge">
+                                    <span class="btn-text">Add to Knowledge Base</span>
+                                    <span class="btn-loader" style="display: none;"></span>
+                                </button>
+                            </form>
+
+                            <div id="addKnowledgeResult" class="result-box" style="display: none;">
+                                <div class="result-content"></div>
+                            </div>
+                        </div>
+
+                        <!-- Search Knowledge Section -->
+                        <div class="knowledge-section">
+                            <h3>Search Knowledge Base</h3>
+                            <div class="form-group">
+                                <label for="searchQuery">Search Query</label>
+                                <div class="input-group">
+                                    <input type="text" id="searchQuery" name="searchQuery"
+                                           placeholder="Search for relevant content...">
+                                    <button type="button" class="btn btn-secondary" id="searchKnowledgeBtn">
+                                        Search
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="searchResults" class="search-results" style="display: none;">
+                                <h4>Search Results</h4>
+                                <div class="results-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Automated Sales Proposal System | Powered by AI</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
