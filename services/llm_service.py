@@ -27,13 +27,19 @@ class LLMService:
                 raise ImportError("openai package not installed")
         elif self.provider == "anthropic":
             try:
-                from anthropic import Anthropic
+                import anthropic
                 api_key = settings.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
                 if not api_key:
                     raise ValueError("Anthropic API key not found")
-                self.client = Anthropic(api_key=api_key)
+
+                # Check if we have the new SDK (0.3.0+)
+                if hasattr(anthropic, 'Anthropic'):
+                    self.client = anthropic.Anthropic(api_key=api_key)
+                else:
+                    # Fallback for older versions
+                    self.client = anthropic.Client(api_key=api_key)
             except ImportError:
-                raise ImportError("anthropic package not installed")
+                raise ImportError("anthropic package not installed. Install with: pip install anthropic>=0.7.0")
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -64,12 +70,23 @@ class LLMService:
                 return response.choices[0].message.content
 
             elif self.provider == "anthropic":
-                kwargs = {"model": self.model, "max_tokens": tokens, "messages": [{"role": "user", "content": prompt}]}
-                if system_prompt:
-                    kwargs["system"] = system_prompt
+                # Check if client has messages attribute (new SDK)
+                if hasattr(self.client, 'messages'):
+                    kwargs = {"model": self.model, "max_tokens": tokens, "messages": [{"role": "user", "content": prompt}]}
+                    if system_prompt:
+                        kwargs["system"] = system_prompt
 
-                response = self.client.messages.create(**kwargs)
-                return response.content[0].text
+                    response = self.client.messages.create(**kwargs)
+                    return response.content[0].text
+                else:
+                    # Fallback for older SDK versions
+                    prompt_text = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+                    response = self.client.completions.create(
+                        model=self.model,
+                        max_tokens_to_sample=tokens,
+                        prompt=f"\n\nHuman: {prompt_text}\n\nAssistant:",
+                    )
+                    return response.completion
 
         except Exception as e:
             raise Exception(f"LLM generation failed: {str(e)}")

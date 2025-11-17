@@ -43,6 +43,10 @@ class MetadataExtractor:
     def extract_from_content(self, text: str, max_chars: int = 3000) -> Dict[str, Any]:
         """Extract metadata from document content using LLM."""
 
+        # If LLM is not available, use fallback immediately
+        if self.llm is None:
+            return self._fallback_extraction(text)
+
         # Truncate to avoid token limits
         excerpt = text[:max_chars]
 
