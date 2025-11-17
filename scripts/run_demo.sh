@@ -28,12 +28,12 @@ fi
 
 # Check if embeddings are loaded
 echo -e "${YELLOW}Checking embeddings...${NC}"
-if [ -f "resources/vector_store/index.faiss" ]; then
+if [ -f "data/vector_store/faiss.index" ]; then
     echo -e "${GREEN}✅ Vector store found${NC}\n"
 else
     echo -e "${RED}❌ Vector store not found${NC}"
     echo -e "${YELLOW}Please run embeddings first:${NC}"
-    echo -e "  python scripts/create_embeddings.py\n"
+    echo -e "  python scripts/ingest_rfp_knowledge.py\n"
     exit 1
 fi
 
