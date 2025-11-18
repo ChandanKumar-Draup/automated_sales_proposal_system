@@ -1,6 +1,7 @@
 // Configuration
 const API_BASE_URL = 'http://localhost:8000';
 let recentWorkflows = [];
+let currentDocument = null;  // Currently loaded document for editing
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -100,6 +101,11 @@ function initializeForms() {
             handleGetSuggestions();
         }
     });
+
+    // Document Editor
+    document.getElementById('refreshDocumentsBtn').addEventListener('click', loadDocumentsList);
+    document.getElementById('saveDocumentBtn').addEventListener('click', handleSaveDocument);
+    document.getElementById('closeEditorBtn').addEventListener('click', closeDocumentEditor);
 }
 
 // File Upload Handling
@@ -770,4 +776,208 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ==================== Document Editor Functions ====================
+
+// Load documents list
+async function loadDocumentsList() {
+    const listDiv = document.getElementById('documentsList');
+    const btn = document.getElementById('refreshDocumentsBtn');
+
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/documents`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.documents && data.documents.length > 0) {
+            listDiv.innerHTML = data.documents.map(doc => `
+                <div class="document-card" onclick="openDocument('${doc.workflow_id}')">
+                    <div class="document-card-header">
+                        <span class="document-title">${escapeHtml(doc.title)}</span>
+                        <span class="document-type ${doc.document_type}">${doc.document_type}</span>
+                    </div>
+                    <div class="document-card-info">
+                        <div class="info-row">
+                            <span class="info-label">ID:</span>
+                            <span class="info-value">${doc.workflow_id}</span>
+                        </div>
+                        ${doc.client_name ? `
+                            <div class="info-row">
+                                <span class="info-label">Client:</span>
+                                <span class="info-value">${escapeHtml(doc.client_name)}</span>
+                            </div>
+                        ` : ''}
+                        ${doc.last_edited_by_user ? `
+                            <div class="info-row">
+                                <span class="info-label">Last edited:</span>
+                                <span class="info-value">${escapeHtml(doc.last_edited_by_user.display_name)}</span>
+                            </div>
+                        ` : ''}
+                        ${doc.last_edited_at ? `
+                            <div class="info-row">
+                                <span class="info-label">At:</span>
+                                <span class="info-value">${new Date(doc.last_edited_at).toLocaleString()}</span>
+                            </div>
+                        ` : ''}
+                        <div class="info-row">
+                            <span class="info-label">Edits:</span>
+                            <span class="info-value">${doc.edit_count || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            listDiv.innerHTML = '<p class="empty-state">No documents yet. Generate a proposal to get started!</p>';
+        }
+
+        showToast(`Loaded ${data.documents.length} documents`, 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(`Error: ${error.message}`, 'error');
+        listDiv.innerHTML = `<p class="empty-state" style="color: var(--error-color);">Error loading documents: ${error.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Refresh List';
+    }
+}
+
+// Open document for editing
+async function openDocument(workflowId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/documents/${workflowId}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const doc = await response.json();
+        currentDocument = doc;
+
+        // Populate editor fields
+        document.getElementById('docWorkflowId').textContent = doc.workflow_id;
+        document.getElementById('docClientName').textContent = doc.client_name || '-';
+        document.getElementById('docTitle').value = doc.title;
+        document.getElementById('docContent').value = doc.content;
+
+        // Update edit info
+        if (doc.last_edited_by_user) {
+            document.getElementById('docLastEditedBy').textContent = doc.last_edited_by_user.display_name;
+        } else {
+            document.getElementById('docLastEditedBy').textContent = '-';
+        }
+
+        if (doc.last_edited_at) {
+            document.getElementById('docLastEditedAt').textContent = new Date(doc.last_edited_at).toLocaleString();
+        } else {
+            document.getElementById('docLastEditedAt').textContent = '-';
+        }
+
+        document.getElementById('docEditCount').textContent = doc.edit_count || 0;
+
+        // Show editor section
+        document.getElementById('documentEditorSection').style.display = 'block';
+        document.getElementById('saveResult').style.display = 'none';
+
+        showToast('Document loaded for editing', 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(`Error loading document: ${error.message}`, 'error');
+    }
+}
+
+// Save document
+async function handleSaveDocument() {
+    if (!currentDocument) {
+        showToast('No document loaded', 'warning');
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveDocumentBtn');
+    const btnText = saveBtn.querySelector('.btn-text');
+    const btnLoader = saveBtn.querySelector('.btn-loader');
+    const resultBox = document.getElementById('saveResult');
+
+    saveBtn.disabled = true;
+    btnText.textContent = 'Saving...';
+    btnLoader.style.display = 'inline-block';
+
+    try {
+        const title = document.getElementById('docTitle').value;
+        const content = document.getElementById('docContent').value;
+
+        const params = new URLSearchParams({
+            title: title,
+            content: content
+        });
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/v1/documents/${currentDocument.workflow_id}?${params}`,
+            {
+                method: 'PUT'
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Update current document with new data
+        currentDocument = data.document;
+
+        // Update edit info display
+        if (data.document.last_edited_by_user) {
+            document.getElementById('docLastEditedBy').textContent = data.document.last_edited_by_user.display_name;
+        }
+        if (data.document.last_edited_at) {
+            document.getElementById('docLastEditedAt').textContent = new Date(data.document.last_edited_at).toLocaleString();
+        }
+        document.getElementById('docEditCount').textContent = data.document.edit_count || 0;
+
+        // Show success message
+        resultBox.style.display = 'block';
+        resultBox.className = 'result-box';
+        resultBox.querySelector('.result-content').innerHTML = `
+            <p style="color: var(--success-color);">Document saved successfully!</p>
+            <p><small>Saved by: ${data.document.last_edited_by_user ? data.document.last_edited_by_user.display_name : 'Unknown'}</small></p>
+        `;
+
+        showToast('Document saved successfully!', 'success');
+
+        // Refresh documents list
+        loadDocumentsList();
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(`Error saving document: ${error.message}`, 'error');
+        resultBox.style.display = 'block';
+        resultBox.className = 'result-box error';
+        resultBox.querySelector('.result-content').innerHTML = `
+            <p style="color: var(--error-color);">Error: ${escapeHtml(error.message)}</p>
+        `;
+    } finally {
+        saveBtn.disabled = false;
+        btnText.textContent = 'Save Document';
+        btnLoader.style.display = 'none';
+    }
+}
+
+// Close document editor
+function closeDocumentEditor() {
+    currentDocument = null;
+    document.getElementById('documentEditorSection').style.display = 'none';
+    document.getElementById('docTitle').value = '';
+    document.getElementById('docContent').value = '';
+    document.getElementById('saveResult').style.display = 'none';
 }

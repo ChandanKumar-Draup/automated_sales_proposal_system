@@ -149,6 +149,7 @@ class WorkflowStatus(BaseModel):
     generated_responses: List[GeneratedResponse] = Field(default_factory=list)
     review_result: Optional[ReviewResult] = None
     output_file_path: Optional[str] = None
+    proposal_content: Optional[str] = None  # Raw proposal content for editing
 
 
 class QASource(BaseModel):

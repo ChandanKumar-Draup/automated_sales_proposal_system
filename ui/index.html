@@ -25,6 +25,7 @@
             <button class="tab" data-tab="qa">Q&A</button>
             <button class="tab" data-tab="rfp-upload">Upload RFP</button>
             <button class="tab" data-tab="workflows">Workflows</button>
+            <button class="tab" data-tab="documents">Documents</button>
             <button class="tab" data-tab="knowledge">Knowledge Base</button>
         </nav>
 
@@ -229,6 +230,79 @@
                         <h3>Recent Workflows</h3>
                         <div id="recentWorkflows" class="workflows-container">
                             <p class="empty-state">No workflows yet. Create a proposal to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Documents Tab -->
+            <section id="documents-tab" class="tab-content">
+                <div class="card">
+                    <h2>Document Editor</h2>
+                    <p class="description">View and edit generated proposals</p>
+
+                    <div class="documents-sections">
+                        <!-- Document List -->
+                        <div class="documents-list-section">
+                            <h3>Available Documents</h3>
+                            <button type="button" class="btn btn-secondary" id="refreshDocumentsBtn" style="margin-bottom: 15px;">
+                                Refresh List
+                            </button>
+                            <div id="documentsList" class="documents-list">
+                                <p class="empty-state">No documents yet. Generate a proposal to get started!</p>
+                            </div>
+                        </div>
+
+                        <!-- Document Editor -->
+                        <div class="document-editor-section" id="documentEditorSection" style="display: none;">
+                            <h3>Edit Document</h3>
+                            <div class="document-meta" id="documentMeta">
+                                <div class="meta-item">
+                                    <span class="meta-label">Document ID:</span>
+                                    <span class="meta-value" id="docWorkflowId"></span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Client:</span>
+                                    <span class="meta-value" id="docClientName"></span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Last Edited By:</span>
+                                    <span class="meta-value" id="docLastEditedBy">-</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Last Edited At:</span>
+                                    <span class="meta-value" id="docLastEditedAt">-</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">Edit Count:</span>
+                                    <span class="meta-value" id="docEditCount">0</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="docTitle">Title</label>
+                                <input type="text" id="docTitle" name="docTitle" placeholder="Document title">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="docContent">Content</label>
+                                <textarea id="docContent" name="docContent" rows="20"
+                                          placeholder="Document content will appear here..."></textarea>
+                            </div>
+
+                            <div class="editor-actions">
+                                <button type="button" class="btn btn-primary" id="saveDocumentBtn">
+                                    <span class="btn-text">Save Document</span>
+                                    <span class="btn-loader" style="display: none;"></span>
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="closeEditorBtn">
+                                    Close Editor
+                                </button>
+                            </div>
+
+                            <div id="saveResult" class="result-box" style="display: none;">
+                                <div class="result-content"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
