@@ -19,6 +19,7 @@
 
         <nav class="tabs">
             <button class="tab active" data-tab="quick-proposal">Quick Proposal</button>
+            <button class="tab" data-tab="qa">Q&A</button>
             <button class="tab" data-tab="rfp-upload">Upload RFP</button>
             <button class="tab" data-tab="workflows">Workflows</button>
             <button class="tab" data-tab="knowledge">Knowledge Base</button>
@@ -69,6 +70,87 @@
                     <div id="quickProposalResult" class="result-box" style="display: none;">
                         <h3>Proposal Generated!</h3>
                         <div class="result-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Q&A Tab -->
+            <section id="qa-tab" class="tab-content">
+                <div class="card">
+                    <h2>Ask Questions</h2>
+                    <p class="description">Get AI-generated answers from the knowledge base</p>
+
+                    <div class="qa-sections">
+                        <!-- Ask Question Section -->
+                        <div class="qa-section">
+                            <form id="qaForm">
+                                <div class="form-group">
+                                    <label for="qaQuestion">Your Question *</label>
+                                    <textarea id="qaQuestion" name="qaQuestion" rows="3" required
+                                              placeholder="Ask any question about our products, services, case studies, or capabilities..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="qaContext">Additional Context (Optional)</label>
+                                    <input type="text" id="qaContext" name="qaContext"
+                                           placeholder="e.g., Healthcare industry, Enterprise client, Security focus">
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group half">
+                                        <label for="qaTopK">Number of Sources</label>
+                                        <select id="qaTopK" name="qaTopK">
+                                            <option value="3">3 sources</option>
+                                            <option value="5" selected>5 sources</option>
+                                            <option value="10">10 sources</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group half">
+                                        <label>
+                                            <input type="checkbox" id="qaIncludeSources" checked>
+                                            Show source chunks
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" id="submitQa">
+                                    <span class="btn-text">Get Answer</span>
+                                    <span class="btn-loader" style="display: none;"></span>
+                                </button>
+                            </form>
+
+                            <div id="qaResult" class="result-box" style="display: none;">
+                                <div class="qa-answer">
+                                    <h3>Answer</h3>
+                                    <div class="answer-content"></div>
+                                    <div class="answer-meta">
+                                        <span class="confidence">Confidence: <span class="confidence-value"></span></span>
+                                        <span class="model">Model: <span class="model-value"></span></span>
+                                    </div>
+                                </div>
+                                <div class="qa-sources" style="display: none;">
+                                    <h4>Sources Used</h4>
+                                    <div class="sources-list"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Suggested Questions Section -->
+                        <div class="qa-section suggestions-section">
+                            <h3>Suggested Questions</h3>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <input type="text" id="suggestionTopic" name="suggestionTopic"
+                                           placeholder="Enter a topic (optional)">
+                                    <button type="button" class="btn btn-secondary" id="getSuggestionsBtn">
+                                        Get Suggestions
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="suggestedQuestions" class="suggested-questions">
+                                <p class="empty-state">Click "Get Suggestions" to see example questions</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

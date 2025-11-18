@@ -6,11 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from datetime import datetime
 
-from models.schemas import ProposalRequest, RFPUploadRequest, WorkflowStatus
+from models.schemas import ProposalRequest, RFPUploadRequest, WorkflowStatus, QARequest, QAResponse
 from services.llm_service import LLMService
 from services.vector_store import VectorStore
 from services.document_processor import DocumentProcessor
 from agents.orchestrator import OrchestratorAgent
+from agents.qa_agent import QAAgent
 from config import settings
 
 # Initialize FastAPI app
@@ -33,6 +34,7 @@ app.add_middleware(
 llm_service = None
 vector_store = None
 orchestrator = None
+qa_agent = None
 doc_processor = DocumentProcessor()
 
 
@@ -47,6 +49,19 @@ def get_orchestrator() -> OrchestratorAgent:
         orchestrator = OrchestratorAgent(llm_service, vector_store)
 
     return orchestrator
+
+
+def get_qa_agent() -> QAAgent:
+    """Get or create QA agent instance."""
+    global llm_service, vector_store, qa_agent
+
+    if qa_agent is None:
+        # Initialize services if not already done
+        if llm_service is None:
+            get_orchestrator()  # This will initialize llm_service and vector_store
+        qa_agent = QAAgent(llm_service, vector_store)
+
+    return qa_agent
 
 
 # In-memory workflow storage (in production, use a database)
@@ -65,6 +80,11 @@ def root():
             "upload_rfp": "/api/v1/rfp/upload",
             "workflow_status": "/api/v1/workflows/{workflow_id}",
             "download": "/api/v1/download/{workflow_id}",
+            "qa_ask": "/api/v1/qa/ask",
+            "qa_batch": "/api/v1/qa/batch",
+            "qa_suggestions": "/api/v1/qa/suggestions",
+            "knowledge_search": "/api/v1/knowledge/search",
+            "knowledge_add": "/api/v1/knowledge/add",
         },
     }
 
@@ -235,6 +255,102 @@ def search_knowledge(query: str, top_k: int = 5):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+
+# ==================== Q&A Endpoints ====================
+
+@app.post("/api/v1/qa/ask", response_model=QAResponse)
+async def ask_question(request: QARequest):
+    """
+    Ask a question and get an AI-generated answer with sources.
+
+    This endpoint uses RAG (Retrieval Augmented Generation) to:
+    1. Search the knowledge base for relevant content
+    2. Generate a comprehensive answer using the LLM
+    3. Return the answer with source citations and confidence score
+
+    Use this for any questions the sales team or anyone needs answered.
+    """
+    try:
+        agent = get_qa_agent()
+        response = agent.ask(
+            question=request.question,
+            top_k=request.top_k,
+            include_sources=request.include_sources,
+            context=request.context
+        )
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to answer question: {str(e)}")
+
+
+@app.get("/api/v1/qa/ask")
+async def ask_question_get(
+    question: str,
+    top_k: int = 5,
+    include_sources: bool = True,
+    context: Optional[str] = None
+):
+    """
+    GET version of the Q&A endpoint for simple queries.
+
+    Same as POST /api/v1/qa/ask but accepts query parameters.
+    """
+    try:
+        agent = get_qa_agent()
+        response = agent.ask(
+            question=question,
+            top_k=top_k,
+            include_sources=include_sources,
+            context=context
+        )
+        return response
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to answer question: {str(e)}")
+
+
+@app.post("/api/v1/qa/batch")
+async def batch_ask_questions(questions: list[str], top_k: int = 5, include_sources: bool = True):
+    """
+    Answer multiple questions at once.
+
+    Useful for processing a list of FAQ questions or RFP questions.
+    """
+    try:
+        agent = get_qa_agent()
+        responses = agent.batch_ask(
+            questions=questions,
+            top_k=top_k,
+            include_sources=include_sources
+        )
+        return {
+            "count": len(responses),
+            "responses": responses
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process batch questions: {str(e)}")
+
+
+@app.get("/api/v1/qa/suggestions")
+async def get_suggested_questions(topic: Optional[str] = None):
+    """
+    Get suggested questions based on the knowledge base.
+
+    Optionally provide a topic to get topic-specific suggestions.
+    """
+    try:
+        agent = get_qa_agent()
+        suggestions = agent.get_suggested_questions(topic)
+        return {
+            "topic": topic,
+            "suggestions": suggestions
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get suggestions: {str(e)}")
 
 
 if __name__ == "__main__":

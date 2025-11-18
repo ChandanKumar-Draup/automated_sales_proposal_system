@@ -148,3 +148,28 @@ class WorkflowStatus(BaseModel):
     generated_responses: List[GeneratedResponse] = Field(default_factory=list)
     review_result: Optional[ReviewResult] = None
     output_file_path: Optional[str] = None
+
+
+class QASource(BaseModel):
+    """Source chunk used in Q&A response."""
+    text: str
+    score: float
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class QARequest(BaseModel):
+    """Request for Q&A endpoint."""
+    question: str
+    top_k: int = 5
+    include_sources: bool = True
+    context: Optional[str] = None  # Optional additional context
+
+
+class QAResponse(BaseModel):
+    """Response from Q&A endpoint."""
+    question: str
+    answer: str
+    sources: List[QASource] = Field(default_factory=list)
+    confidence: float
+    generated_at: datetime
+    model_used: str = ""
