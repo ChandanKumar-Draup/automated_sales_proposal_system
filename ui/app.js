@@ -62,6 +62,12 @@ function initializeForms() {
     // Quick Proposal Form
     document.getElementById('quickProposalForm').addEventListener('submit', handleQuickProposal);
 
+    // Q&A Form
+    document.getElementById('qaForm').addEventListener('submit', handleQA);
+
+    // Get Suggestions
+    document.getElementById('getSuggestionsBtn').addEventListener('click', handleGetSuggestions);
+
     // RFP Upload Form
     document.getElementById('rfpUploadForm').addEventListener('submit', handleRfpUpload);
 
@@ -85,6 +91,13 @@ function initializeForms() {
     document.getElementById('workflowId').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             checkWorkflowStatus();
+        }
+    });
+
+    // Enter key for suggestions topic
+    document.getElementById('suggestionTopic').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleGetSuggestions();
         }
     });
 }
@@ -185,6 +198,163 @@ async function handleQuickProposal(e) {
         btnText.textContent = 'Generate Proposal';
         btnLoader.style.display = 'none';
     }
+}
+
+// Q&A Handler
+async function handleQA(e) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('submitQa');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+    const resultBox = document.getElementById('qaResult');
+
+    // Disable button and show loader
+    submitBtn.disabled = true;
+    btnText.textContent = 'Generating Answer...';
+    btnLoader.style.display = 'inline-block';
+    resultBox.style.display = 'none';
+
+    try {
+        const requestData = {
+            question: document.getElementById('qaQuestion').value,
+            top_k: parseInt(document.getElementById('qaTopK').value),
+            include_sources: document.getElementById('qaIncludeSources').checked,
+            context: document.getElementById('qaContext').value || null
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/v1/qa/ask`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Display result
+        displayQAResult(data, resultBox);
+        showToast('Answer generated successfully!', 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(`Error: ${error.message}`, 'error');
+        displayError(resultBox, error.message);
+    } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = 'Get Answer';
+        btnLoader.style.display = 'none';
+    }
+}
+
+// Display Q&A Result
+function displayQAResult(data, resultBox) {
+    resultBox.style.display = 'block';
+    resultBox.className = 'result-box';
+
+    // Display answer
+    const answerContent = resultBox.querySelector('.answer-content');
+    answerContent.innerHTML = `<div class="answer-text">${escapeHtml(data.answer).replace(/\n/g, '<br>')}</div>`;
+
+    // Display metadata
+    const confidenceValue = resultBox.querySelector('.confidence-value');
+    const modelValue = resultBox.querySelector('.model-value');
+
+    const confidencePercent = (data.confidence * 100).toFixed(1);
+    confidenceValue.textContent = `${confidencePercent}%`;
+    confidenceValue.className = `confidence-value ${getConfidenceClass(data.confidence)}`;
+    modelValue.textContent = data.model_used || 'N/A';
+
+    // Display sources if available
+    const sourcesDiv = resultBox.querySelector('.qa-sources');
+    const sourcesList = resultBox.querySelector('.sources-list');
+
+    if (data.sources && data.sources.length > 0) {
+        sourcesDiv.style.display = 'block';
+        sourcesList.innerHTML = data.sources.map((source, index) => `
+            <div class="source-item">
+                <div class="source-header">
+                    <strong>Source ${index + 1}</strong>
+                    <span class="source-score">Relevance: ${(source.score * 100).toFixed(1)}%</span>
+                </div>
+                <div class="source-text">${escapeHtml(source.text)}</div>
+                ${source.metadata && Object.keys(source.metadata).length > 0 ? `
+                    <div class="source-metadata">
+                        ${Object.entries(source.metadata).map(([key, value]) =>
+                            `<span class="meta-tag">${key}: ${value}</span>`
+                        ).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    } else {
+        sourcesDiv.style.display = 'none';
+    }
+}
+
+// Get confidence class for styling
+function getConfidenceClass(confidence) {
+    if (confidence >= 0.7) return 'high';
+    if (confidence >= 0.4) return 'medium';
+    return 'low';
+}
+
+// Get Suggestions Handler
+async function handleGetSuggestions() {
+    const topic = document.getElementById('suggestionTopic').value.trim();
+    const suggestionsDiv = document.getElementById('suggestedQuestions');
+    const btn = document.getElementById('getSuggestionsBtn');
+
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+
+    try {
+        let url = `${API_BASE_URL}/api/v1/qa/suggestions`;
+        if (topic) {
+            url += `?topic=${encodeURIComponent(topic)}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.suggestions && data.suggestions.length > 0) {
+            suggestionsDiv.innerHTML = data.suggestions.map(question => `
+                <div class="suggestion-item" onclick="useQuestion('${escapeHtml(question).replace(/'/g, "\\'")}')">
+                    <span class="suggestion-icon">?</span>
+                    <span class="suggestion-text">${escapeHtml(question)}</span>
+                </div>
+            `).join('');
+        } else {
+            suggestionsDiv.innerHTML = '<p class="empty-state">No suggestions available</p>';
+        }
+
+        showToast(`Got ${data.suggestions.length} suggestions`, 'success');
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(`Error: ${error.message}`, 'error');
+        suggestionsDiv.innerHTML = `<p class="empty-state" style="color: var(--error-color);">Error: ${error.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Get Suggestions';
+    }
+}
+
+// Use a suggested question
+function useQuestion(question) {
+    document.getElementById('qaQuestion').value = question;
+    document.getElementById('qaQuestion').focus();
+    showToast('Question added to input', 'success');
 }
 
 // RFP Upload Handler
