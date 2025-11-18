@@ -18,6 +18,7 @@ from agents.reviewer import ReviewerAgent
 from agents.formatter import FormatterAgent
 from services.llm_service import LLMService
 from services.vector_store import VectorStore
+from models.database import save_document
 from config import settings
 
 
@@ -189,6 +190,19 @@ class OrchestratorAgent:
             proposal_content = self.generator.generate_quick_proposal(
                 client_context=client_context, proposal_type=request.proposal_type
             )
+
+            # Save document to database for editing
+            save_document(
+                workflow_id=workflow_id,
+                title=f"Proposal for {request.client_name}",
+                content=proposal_content,
+                client_name=request.client_name,
+                document_type="proposal"
+            )
+            print(f"[{workflow_id}] Document saved to database")
+
+            # Store proposal content in workflow for UI display
+            workflow.proposal_content = proposal_content
 
             # Step 3: Quick review
             print(f"[{workflow_id}] State: REVIEWING")

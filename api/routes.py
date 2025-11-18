@@ -7,6 +7,10 @@ from typing import Optional
 from datetime import datetime
 
 from models.schemas import ProposalRequest, RFPUploadRequest, WorkflowStatus, QARequest, QAResponse
+from models.database import (
+    init_database, save_document, get_document, get_all_documents,
+    get_default_user, get_all_users, get_user_by_id
+)
 from services.llm_service import LLMService
 from services.vector_store import VectorStore
 from services.document_processor import DocumentProcessor
@@ -68,6 +72,14 @@ def get_qa_agent() -> QAAgent:
 workflows = {}
 
 
+# Startup event to initialize database
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup."""
+    init_database()
+    print("Database initialized successfully")
+
+
 @app.get("/")
 def root():
     """Root endpoint."""
@@ -85,6 +97,11 @@ def root():
             "qa_suggestions": "/api/v1/qa/suggestions",
             "knowledge_search": "/api/v1/knowledge/search",
             "knowledge_add": "/api/v1/knowledge/add",
+            "documents_list": "/api/v1/documents",
+            "document_get": "/api/v1/documents/{workflow_id}",
+            "document_update": "/api/v1/documents/{workflow_id}",
+            "users_list": "/api/v1/users",
+            "user_current": "/api/v1/users/current",
         },
     }
 
@@ -351,6 +368,145 @@ async def get_suggested_questions(topic: Optional[str] = None):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get suggestions: {str(e)}")
+
+
+# ==================== Document Editing Endpoints ====================
+
+@app.get("/api/v1/documents")
+async def list_documents(limit: int = 50):
+    """
+    List all editable documents.
+
+    Returns documents sorted by most recently updated.
+    """
+    try:
+        documents = get_all_documents(limit=limit)
+        return {
+            "count": len(documents),
+            "documents": documents
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
+
+
+@app.get("/api/v1/documents/{workflow_id}")
+async def get_document_content(workflow_id: str):
+    """
+    Get a specific document by workflow ID.
+    """
+    try:
+        document = get_document(workflow_id)
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        return document
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get document: {str(e)}")
+
+
+@app.put("/api/v1/documents/{workflow_id}")
+async def update_document(workflow_id: str, title: str, content: str, user_id: Optional[int] = None):
+    """
+    Update/save a document with user tracking.
+
+    If user_id is not provided, uses the default user.
+    """
+    try:
+        # Use default user if not specified
+        if user_id is None:
+            default_user = get_default_user()
+            if default_user:
+                user_id = default_user.id
+
+        # Get existing document to preserve client_name
+        existing = get_document(workflow_id)
+        client_name = existing.get("client_name") if existing else None
+        document_type = existing.get("document_type", "proposal") if existing else "proposal"
+
+        document = save_document(
+            workflow_id=workflow_id,
+            title=title,
+            content=content,
+            client_name=client_name,
+            document_type=document_type,
+            user_id=user_id
+        )
+
+        return {
+            "status": "success",
+            "message": "Document saved successfully",
+            "document": document
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save document: {str(e)}")
+
+
+@app.post("/api/v1/documents")
+async def create_document(
+    workflow_id: str,
+    title: str,
+    content: str,
+    client_name: Optional[str] = None,
+    document_type: str = "proposal"
+):
+    """
+    Create a new editable document.
+    """
+    try:
+        # Check if document already exists
+        existing = get_document(workflow_id)
+        if existing:
+            raise HTTPException(status_code=400, detail="Document with this workflow_id already exists")
+
+        document = save_document(
+            workflow_id=workflow_id,
+            title=title,
+            content=content,
+            client_name=client_name,
+            document_type=document_type
+        )
+
+        return {
+            "status": "success",
+            "message": "Document created successfully",
+            "document": document
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create document: {str(e)}")
+
+
+@app.get("/api/v1/users")
+async def list_users():
+    """
+    List all active users.
+    """
+    try:
+        users = get_all_users()
+        return {
+            "count": len(users),
+            "users": users
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list users: {str(e)}")
+
+
+@app.get("/api/v1/users/current")
+async def get_current_user():
+    """
+    Get the current (default) user.
+    """
+    try:
+        user = get_default_user()
+        if not user:
+            raise HTTPException(status_code=404, detail="No default user found")
+        return user.to_dict()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get current user: {str(e)}")
 
 
 if __name__ == "__main__":
