@@ -376,119 +376,148 @@ Pydantic schemas for:
 
 ## API Endpoints
 
+> **Full API Documentation**: See `docs/API_REFERENCE.md` for complete details including input/output schemas, error handling, and integration examples.
+
 ### Base URL: `http://localhost:8000`
 
-### Health Check
-```
-GET /health
-Returns: {"status": "ok"}
-```
+### Quick Reference
 
-### API Documentation
-```
-GET /docs          # Swagger UI
-GET /redoc         # ReDoc UI
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/docs` | GET | Swagger UI |
+| `/api/v1/proposals/quick` | POST | Generate quick proposal |
+| `/api/v1/rfp/upload` | POST | Upload RFP document |
+| `/api/v1/workflows/{id}` | GET | Get workflow status |
+| `/api/v1/download/{id}` | GET | Download proposal DOCX |
+| `/api/v1/qa/ask` | POST/GET | Ask a question (RAG) |
+| `/api/v1/qa/batch` | POST | Batch Q&A |
+| `/api/v1/qa/suggestions` | GET | Get suggested questions |
+| `/api/v1/knowledge/add` | POST | Add to knowledge base |
+| `/api/v1/knowledge/search` | GET | Search knowledge base |
+| `/api/v1/documents` | GET/POST | List/create documents |
+| `/api/v1/documents/{id}` | GET/PUT | Get/update document |
+| `/api/v1/users` | GET | List users |
+| `/api/v1/users/current` | GET | Get current user |
 
 ---
 
-### Proposal Generation
+### Key Endpoints
 
-#### Upload RFP
-```
-POST /api/v1/rfp/upload
-Content-Type: multipart/form-data
-
-Parameters:
-  - file: File (PDF/DOCX/XLSX)
-  - client_name: str
-  - industry: str (optional)
-
-Returns:
-  - workflow_id: str
-  - status: str
-```
-
-#### Quick Proposal (No Upload)
-```
+#### Quick Proposal
+```http
 POST /api/v1/proposals/quick
 Content-Type: application/json
 
-Body:
 {
-  "company_name": "Acme Corp",
+  "client_name": "Acme Corp",
   "contact_title": "CEO",
   "industry": "Healthcare",
-  "requirements": ["talent sourcing", "RPO"]
+  "proposal_type": "pitch_deck",
+  "requirements": "talent sourcing needs",
+  "tone": "professional"
 }
-
-Returns:
-  - workflow_id: str
-  - status: str
 ```
 
-#### Check Workflow Status
-```
-GET /api/v1/workflows/{workflow_id}
+**Response**: Returns `WorkflowStatus` with `workflow_id`, `state`, and `proposal_content`
 
-Returns:
-  - status: "pending" | "processing" | "completed" | "failed"
-  - progress: float (0-1)
-  - result: object (if completed)
-```
+#### Q&A System
+```http
+POST /api/v1/qa/ask
+Content-Type: application/json
 
-#### Download Proposal
-```
-GET /api/v1/download/{workflow_id}
-
-Returns: DOCX file (application/vnd.openxmlformats-officedocument.wordprocessingml.document)
+{
+  "question": "What RPO services do we offer?",
+  "top_k": 5,
+  "include_sources": true,
+  "context": "For healthcare client"
+}
 ```
 
----
+**Response**: Returns `answer`, `sources`, `confidence` score
 
-### Knowledge Base Management
-
-#### Add Knowledge
-```
-POST /api/v1/knowledge/add?text=...&metadata={...}
-
-Parameters:
-  - text: str (content to add)
-  - metadata: JSON (source, industry, outcome, etc.)
-
-Returns:
-  - id: str
-  - status: "added"
-```
-
-#### Search Knowledge
-```
-GET /api/v1/knowledge/search?query=...&top_k=5
-
-Parameters:
-  - query: str (search query)
-  - top_k: int (number of results, default: 5)
-  - filter: JSON (metadata filters)
-
-Returns:
-  - results: Array of {text, metadata, score}
-```
-
-#### Batch Ingest
-```
-POST /api/v1/knowledge/ingest
-Content-Type: multipart/form-data
-
-Parameters:
-  - files: List[File]
-  - metadata: JSON
-
-Returns:
-  - ingested_count: int
-  - failed_count: int
+#### Document Management
+```http
+GET /api/v1/documents                    # List all documents
+GET /api/v1/documents/{workflow_id}      # Get specific document
+PUT /api/v1/documents/{workflow_id}      # Update document
+POST /api/v1/documents                   # Create new document
 ```
 
 **API Routes Location**: `/home/user/automated_sales_proposal_system/api/routes.py:1`
+
+---
+
+## Frontend Integration
+
+### Integration Approaches
+
+The backend has CORS enabled (`allow_origins=["*"]`), supporting multiple integration approaches:
+
+#### 1. Development Mode (Simplest)
+Run React and FastAPI separately:
+- Backend: `http://localhost:8000`
+- Frontend: `http://localhost:3000`
+
+#### 2. Reverse Proxy (Production)
+Use Nginx to serve both under same domain:
+```nginx
+location / {
+  # Serve React build
+  root /var/www/react-app/build;
+}
+location /api/ {
+  proxy_pass http://localhost:8000;
+}
+```
+
+#### 3. Docker Compose
+Container orchestration for both services.
+
+#### 4. Static Files from FastAPI
+Serve React build from FastAPI using `StaticFiles`.
+
+### React API Service Example
+
+```javascript
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+export const api = {
+  generateProposal: (data) =>
+    fetch(`${API_BASE}/api/v1/proposals/quick`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }),
+
+  askQuestion: (question, context) =>
+    fetch(`${API_BASE}/api/v1/qa/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, context })
+    }),
+
+  uploadRFP: (file, clientName) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('client_name', clientName);
+    return fetch(`${API_BASE}/api/v1/rfp/upload`, {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+  getDocument: (workflowId) =>
+    fetch(`${API_BASE}/api/v1/documents/${workflowId}`),
+
+  saveDocument: (workflowId, title, content) =>
+    fetch(`${API_BASE}/api/v1/documents/${workflowId}?title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}`, {
+      method: 'PUT'
+    })
+};
+```
+
+> **See**: `docs/API_REFERENCE.md` for complete integration examples and error handling
 
 ---
 
@@ -818,6 +847,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ## Additional Documentation
 
 - **Quick Start**: See `QUICKSTART.md`
+- **API Reference**: See `docs/API_REFERENCE.md` - Complete API documentation with inputs, outputs, and integration examples
 - **RFP Ingestion**: See `docs/RFP_INGESTION_GUIDE.md`
 - **Embedding Strategy**: See `docs/EMBEDDING_STRATEGY.md`
 - **Gemini Setup**: See `docs/GEMINI_SETUP.md`
@@ -864,6 +894,6 @@ When adding new features:
 
 ---
 
-**Last Updated**: 2024-11-14
-**Version**: 1.0
+**Last Updated**: 2025-11-18
+**Version**: 1.1
 **Maintainer**: Development Team
