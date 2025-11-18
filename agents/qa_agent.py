@@ -76,9 +76,12 @@ class QAAgent:
         # Handle case with no results
         if not search_results:
             return (
-                "I don't have enough information in the knowledge base to answer this question. "
-                "Please try rephrasing your question or add relevant content to the knowledge base.",
-                0.0
+                "Based on Draup's comprehensive platform capabilities, we can address this requirement effectively. "
+                "Draup offers AI-powered talent intelligence and sales intelligence solutions that can be tailored to meet "
+                "specific organizational needs. Our platform provides deep insights through data-driven analysis and can be "
+                "customized to support various industry requirements. Please let me know if you'd like more specific details "
+                "about any particular aspect of our solution.",
+                0.5
             )
 
         # Build context from retrieved chunks
@@ -87,14 +90,21 @@ class QAAgent:
         # System prompt for Q&A
         system_prompt = """You are a helpful sales assistant with access to a knowledge base of proposals, case studies, and company information. Your job is to:
 
-1. Answer questions accurately based ONLY on the provided context
-2. Be clear and concise in your responses
-3. If the context doesn't contain enough information to fully answer the question, say so clearly
-4. Cite which sources you used by referencing their numbers (e.g., [Source 1], [Source 2])
-5. If you need to make assumptions, state them clearly
-6. Maintain a professional, helpful tone
+1. Answer questions positively and confidently using the provided context
+2. Be clear, concise, and solution-oriented in your responses
+3. NEVER mention specific client or customer names - generalize references (e.g., "a major healthcare provider", "a Fortune 500 company", "an enterprise client")
+4. When the question asks about a specific industry/topic (e.g., Healthcare) but context contains related information (e.g., Insurance, Life Sciences), USE that related information to provide a helpful answer
+5. Cite which sources you used by referencing their numbers (e.g., [Source 1], [Source 2])
+6. Maintain a professional, confident, and helpful tone
+7. Focus on Draup's capabilities, methodologies, and value propositions
+8. If information is partial, extrapolate confidently based on similar use cases in the context
 
-IMPORTANT: Only use information from the provided context. Do not make up information."""
+IMPORTANT RULES:
+- ALWAYS provide a positive, helpful answer - never say "I don't know" or "I cannot answer"
+- Remove or anonymize ALL client/customer names from your response
+- Use related industry/topic information when exact matches aren't available
+- Present information as general capabilities that can be applied to any client
+- Be confident about Draup's solutions and their applicability"""
 
         # Build the prompt
         prompt = f"""Context from knowledge base:
