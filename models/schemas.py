@@ -123,11 +123,12 @@ class ReviewResult(BaseModel):
 
 class ProposalRequest(BaseModel):
     """Request to create a proposal."""
-    company_name: str
+    client_name: str
     contact_title: Optional[str] = None
     industry: Optional[str] = None
     proposal_type: str = "pitch_deck"  # pitch_deck, rfp_response
-    additional_context: Optional[str] = None
+    requirements: Optional[str] = None
+    tone: Optional[str] = "professional"  # professional, friendly, formal
 
 
 class RFPUploadRequest(BaseModel):

@@ -160,7 +160,7 @@ class OrchestratorAgent:
         """Create a quick proposal for sales outreach."""
 
         workflow_id = f"WF-QUICK-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        print(f"[{workflow_id}] Creating quick proposal for {request.company_name}")
+        print(f"[{workflow_id}] Creating quick proposal for {request.client_name}")
 
         workflow = WorkflowStatus(
             workflow_id=workflow_id,
@@ -174,11 +174,13 @@ class OrchestratorAgent:
             print(f"[{workflow_id}] State: ANALYZING")
             workflow.state = WorkflowState.ANALYZING
 
-            client_context = self.analyzer.quick_analyze(request.company_name, request.contact_title)
+            client_context = self.analyzer.quick_analyze(request.client_name, request.contact_title)
             if request.industry:
                 client_context.industry = request.industry
-            if request.additional_context:
-                client_context.additional_context["notes"] = request.additional_context
+            if request.requirements:
+                client_context.additional_context["notes"] = request.requirements
+            if request.tone:
+                client_context.additional_context["tone"] = request.tone
 
             # Step 2: Generate proposal
             print(f"[{workflow_id}] State: GENERATING")
@@ -200,7 +202,7 @@ class OrchestratorAgent:
             workflow.state = WorkflowState.FORMATTING
 
             output_filename = (
-                f"quick_proposal_{request.company_name.replace(' ', '_')}"
+                f"quick_proposal_{request.client_name.replace(' ', '_')}"
                 f"_{datetime.now().strftime('%Y%m%d')}.docx"
             )
             output_path = os.path.join(settings.output_dir, output_filename)
