@@ -257,9 +257,20 @@ function displayQAResult(data, resultBox) {
     resultBox.style.display = 'block';
     resultBox.className = 'result-box';
 
-    // Display answer
+    // Display answer with markdown rendering
     const answerContent = resultBox.querySelector('.answer-content');
-    answerContent.innerHTML = `<div class="answer-text">${escapeHtml(data.answer).replace(/\n/g, '<br>')}</div>`;
+
+    // Configure marked options
+    marked.setOptions({
+        breaks: true,  // Convert line breaks to <br>
+        gfm: true,     // GitHub Flavored Markdown
+        headerIds: false
+    });
+
+    // Parse markdown and sanitize for security
+    const rawHtml = marked.parse(data.answer);
+    const sanitizedHtml = DOMPurify.sanitize(rawHtml);
+    answerContent.innerHTML = `<div class="answer-text markdown-content">${sanitizedHtml}</div>`;
 
     // Display metadata
     const confidenceValue = resultBox.querySelector('.confidence-value');
