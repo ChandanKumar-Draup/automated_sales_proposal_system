@@ -6,8 +6,9 @@ This service follows SOLID principles:
 - Open/Closed: Extensible for different extraction strategies
 """
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from services.llm_service import LLMService
+from services.question_cache import QuestionCache
 
 
 class QuestionExtractionStrategy:
@@ -19,14 +20,20 @@ class QuestionExtractionStrategy:
 
 
 class LLMQuestionExtractor(QuestionExtractionStrategy):
-    """Extract questions using LLM analysis."""
+    """Extract questions using LLM analysis with file-based caching."""
 
-    def __init__(self, llm_service: LLMService):
-        """Initialize with LLM service."""
+    def __init__(self, llm_service: LLMService, cache: Optional[QuestionCache] = None):
+        """Initialize with LLM service and optional cache.
+
+        Args:
+            llm_service: LLM service for question extraction
+            cache: Optional cache instance (defaults to new QuestionCache)
+        """
         self.llm = llm_service
+        self.cache = cache or QuestionCache()
 
     def extract(self, document_text: str) -> List[str]:
-        """Extract questions from RFP using LLM.
+        """Extract questions from RFP using LLM with caching.
 
         Args:
             document_text: Full text of the RFP document
@@ -34,6 +41,11 @@ class LLMQuestionExtractor(QuestionExtractionStrategy):
         Returns:
             List of questions extracted from the RFP
         """
+        # Check cache first
+        cached_questions = self.cache.get(document_text)
+        if cached_questions is not None:
+            return cached_questions
+
         # Truncate if too long (keep first 8000 chars)
         truncated_text = document_text[:8000] if len(document_text) > 8000 else document_text
 
@@ -73,12 +85,22 @@ Questions:"""
             if not questions:
                 questions = self._fallback_extraction(document_text)
 
+            # Cache the extracted questions
+            if questions:
+                self.cache.set(document_text, questions)
+
             return questions
 
         except Exception as e:
             print(f"Error extracting questions with LLM: {e}")
             # Fallback to simple extraction
-            return self._fallback_extraction(document_text)
+            fallback_questions = self._fallback_extraction(document_text)
+
+            # Cache fallback questions too
+            if fallback_questions:
+                self.cache.set(document_text, fallback_questions)
+
+            return fallback_questions
 
     def _parse_questions(self, llm_response: str) -> List[str]:
         """Parse questions from LLM response.
