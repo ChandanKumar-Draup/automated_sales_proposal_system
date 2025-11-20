@@ -9,11 +9,13 @@ from datetime import datetime
 from models.schemas import ProposalRequest, RFPUploadRequest, WorkflowStatus, QARequest, QAResponse
 from models.database import (
     init_database, save_document, get_document, get_all_documents,
-    get_default_user, get_all_users, get_user_by_id
+    get_default_user, get_all_users, get_user_by_id,
+    create_workflow, get_workflow, get_all_workflows, update_workflow_state
 )
 from services.llm_service import LLMService
 from services.vector_store import VectorStore
 from services.document_processor import DocumentProcessor
+from services.rfp_processor import RFPProcessorService
 from agents.orchestrator import OrchestratorAgent
 from agents.qa_agent import QAAgent
 from config import settings
@@ -39,6 +41,7 @@ llm_service = None
 vector_store = None
 orchestrator = None
 qa_agent = None
+rfp_processor = None
 doc_processor = DocumentProcessor()
 
 
@@ -68,8 +71,17 @@ def get_qa_agent() -> QAAgent:
     return qa_agent
 
 
-# In-memory workflow storage (in production, use a database)
-workflows = {}
+def get_rfp_processor() -> RFPProcessorService:
+    """Get or create RFP processor instance."""
+    global llm_service, vector_store, rfp_processor
+
+    if rfp_processor is None:
+        # Initialize services if not already done
+        if llm_service is None:
+            get_orchestrator()  # This will initialize llm_service and vector_store
+        rfp_processor = RFPProcessorService(llm_service, vector_store)
+
+    return rfp_processor
 
 
 # Startup event to initialize database
@@ -128,11 +140,29 @@ async def create_quick_proposal(request: ProposalRequest):
     This is the fast-track pipeline for sales reps who need a proposal quickly.
     """
     try:
+        # Generate workflow ID
+        workflow_id = f"WF-QUICK-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        # Create workflow in database
+        create_workflow(
+            workflow_id=workflow_id,
+            client_name=request.client_name,
+            workflow_type="quick_proposal",
+            industry=request.industry
+        )
+
+        # Process using orchestrator (synchronous for quick proposals)
         orch = get_orchestrator()
         workflow = orch.create_quick_proposal(request)
 
-        # Store workflow
-        workflows[workflow.workflow_id] = workflow
+        # Update workflow in database with results
+        from models.database import update_workflow_final
+        update_workflow_final(
+            workflow_id=workflow_id,
+            output_file_path=workflow.output_file_path,
+            proposal_content=workflow.proposal_content,
+            state=workflow.state
+        )
 
         return workflow
 
@@ -151,6 +181,11 @@ async def upload_rfp(
     Upload an RFP document for processing.
 
     Supports PDF, DOCX, and TXT formats.
+    Processes the RFP through 4 steps with state updates:
+      1. analyzing - Extract questions
+      2. generating - Generate answers
+      3. reviewing - Quality review
+      4. ready - Format document
     """
     try:
         # Validate file type
@@ -172,19 +207,25 @@ async def upload_rfp(
         # Extract text from document
         rfp_text = doc_processor.extract_text(upload_path)
 
-        # Create initial workflow
+        # Create workflow in database
         workflow_id = f"WF-RFP-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        workflow = WorkflowStatus(
+        create_workflow(
             workflow_id=workflow_id,
-            state="created",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
+            client_name=client_name,
+            workflow_type="rfp_response",
+            industry=industry,
+            file_path=upload_path
         )
-        workflows[workflow_id] = workflow
 
         # Process RFP in background
         if background_tasks:
-            background_tasks.add_task(process_rfp_background, workflow_id, rfp_text, client_name, industry)
+            background_tasks.add_task(
+                process_rfp_background,
+                workflow_id,
+                rfp_text,
+                client_name,
+                industry
+            )
             return {
                 "workflow_id": workflow_id,
                 "status": "processing",
@@ -192,51 +233,90 @@ async def upload_rfp(
             }
         else:
             # Process synchronously (for testing)
-            orch = get_orchestrator()
-            workflow = orch.process_rfp(rfp_text, client_name, industry, workflow_id)
-            workflows[workflow_id] = workflow
-            return {"workflow_id": workflow_id, "status": workflow.state, "workflow": workflow}
+            processor = get_rfp_processor()
+            result = processor.process_rfp_sync(workflow_id, rfp_text, client_name, industry)
+            return {
+                "workflow_id": workflow_id,
+                "status": result.get("state", "ready"),
+                "workflow": result
+            }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process RFP: {str(e)}")
 
 
 def process_rfp_background(workflow_id: str, rfp_text: str, client_name: str, industry: Optional[str]):
-    """Background task to process RFP."""
+    """Background task to process RFP using new stepwise processor."""
     try:
-        orch = get_orchestrator()
-        workflow = orch.process_rfp(rfp_text, client_name, industry, workflow_id)
-        workflows[workflow_id] = workflow
+        processor = get_rfp_processor()
+        processor.process_rfp_sync(workflow_id, rfp_text, client_name, industry)
     except Exception as e:
         print(f"Error processing RFP in background: {e}")
         import traceback
-
         traceback.print_exc()
+        # Update workflow to error state
+        try:
+            update_workflow_state(workflow_id, "error")
+        except:
+            pass
 
 
-@app.get("/api/v1/workflows/{workflow_id}", response_model=WorkflowStatus)
+@app.get("/api/v1/workflows/{workflow_id}")
 def get_workflow_status(workflow_id: str):
-    """Get the status of a workflow."""
-    if workflow_id not in workflows:
+    """Get the status of a workflow from database.
+
+    Returns workflow with progressive updates:
+    - State transitions through: created → analyzing → routing → generating → reviewing → formatting → ready
+    - rfp_analysis available after 'analyzing' state
+    - generated_responses progressively populated during 'generating' state
+    - review_result available after 'reviewing' state
+    - output_file_path available when state is 'ready'
+    """
+    workflow = get_workflow(workflow_id)
+    if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
 
-    return workflows[workflow_id]
+    return workflow
+
+
+@app.get("/api/v1/workflows")
+def list_workflows(limit: int = 50):
+    """List all workflows, most recent first."""
+    try:
+        workflows = get_all_workflows(limit=limit)
+        return {
+            "count": len(workflows),
+            "workflows": workflows
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list workflows: {str(e)}")
 
 
 @app.get("/api/v1/download/{workflow_id}")
 def download_proposal(workflow_id: str):
     """Download the generated proposal document."""
-    if workflow_id not in workflows:
+    workflow = get_workflow(workflow_id)
+    if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
 
-    workflow = workflows[workflow_id]
-
-    if not workflow.output_file_path or not os.path.exists(workflow.output_file_path):
+    output_file_path = workflow.get("output_file_path")
+    if not output_file_path or not os.path.exists(output_file_path):
         raise HTTPException(status_code=404, detail="Output file not found")
 
-    filename = os.path.basename(workflow.output_file_path)
+    # Generate appropriate filename
+    client_name = workflow.get("client_name", "Client").replace(" ", "_")
+    timestamp = datetime.now().strftime("%Y%m%d")
+    workflow_type = workflow.get("workflow_type", "document")
+
+    if workflow_type == "rfp_response":
+        filename = f"RFP_Response_{client_name}_{timestamp}.docx"
+    else:
+        filename = f"Proposal_{client_name}_{timestamp}.docx"
+
     return FileResponse(
-        workflow.output_file_path, media_type="application/octet-stream", filename=filename
+        output_file_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename=filename
     )
 
 
