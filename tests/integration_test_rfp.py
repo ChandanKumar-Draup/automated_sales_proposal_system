@@ -409,6 +409,8 @@ def test_health_check():
 
 def main():
     """Main test execution."""
+    global API_BASE_URL
+
     parser = argparse.ArgumentParser(description="Integration test for RFP upload workflow")
     parser.add_argument("--rfp-file", help="Path to RFP file (PDF, DOCX, or TXT)")
     parser.add_argument("--client", default="TechCorp Industries", help="Client name")
@@ -417,7 +419,6 @@ def main():
 
     args = parser.parse_args()
 
-    global API_BASE_URL
     API_BASE_URL = args.api_url
 
     print_header("RFP UPLOAD WORKFLOW - INTEGRATION TEST")
