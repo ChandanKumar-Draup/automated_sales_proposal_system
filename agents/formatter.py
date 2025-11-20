@@ -102,3 +102,59 @@ Contact us to move forward!
             return self.doc_processor.save_as_txt(doc_content, output_path)
         else:
             raise ValueError(f"Unsupported format: {format_type}")
+
+    def format_rfp_response_from_qa(
+        self,
+        responses: List[dict],
+        client_name: str,
+        output_path: str,
+        format_type: str = "docx"
+    ) -> str:
+        """Format RFP responses from Q&A format into a document.
+
+        Args:
+            responses: List of response dictionaries from QA agent
+            client_name: Name of the client
+            output_path: Path to save the output file
+            format_type: Format type (docx or txt)
+
+        Returns:
+            Path to the saved file
+        """
+        # Build the complete proposal document
+        content_parts = []
+
+        # Header
+        content_parts.append(f"RFP RESPONSE DOCUMENT")
+        content_parts.append(f"Client: {client_name}")
+        content_parts.append(f"Date: {datetime.now().strftime('%B %d, %Y')}")
+        content_parts.append("\n" + "=" * 80 + "\n")
+
+        # Add each question and answer
+        for i, response in enumerate(responses, 1):
+            question = response.get("question", "")
+            answer = response.get("answer", "")
+            confidence = response.get("confidence", 0.0)
+
+            content_parts.append(f"\n### Question {i}")
+            content_parts.append(f"\n{question}\n")
+            content_parts.append(f"**Answer:**\n")
+            content_parts.append(answer)
+
+            # Add confidence indicator for internal use
+            if confidence < 0.5:
+                content_parts.append(f"\n*(Note: This answer may require additional review)*\n")
+
+            content_parts.append("\n" + "-" * 80 + "\n")
+
+        content = "\n".join(content_parts)
+
+        # Save in requested format
+        if format_type == "docx":
+            return self.doc_processor.save_as_docx(
+                content, output_path, title=f"RFP Response for {client_name}"
+            )
+        elif format_type == "txt":
+            return self.doc_processor.save_as_txt(content, output_path)
+        else:
+            raise ValueError(f"Unsupported format: {format_type}")
