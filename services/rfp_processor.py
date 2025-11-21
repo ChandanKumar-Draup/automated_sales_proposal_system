@@ -23,7 +23,8 @@ from models.database import (
     update_workflow_responses,
     update_workflow_review,
     update_workflow_final,
-    get_workflow
+    get_workflow,
+    save_document
 )
 from config import settings
 import os
@@ -318,6 +319,19 @@ class RFPProcessorService:
                 state="ready"
             )
 
+            # Create document record for Workflows page
+            print(f"[{workflow_id}] Creating document record for Workflows page")
+            markdown_content = self._format_rfp_response_as_markdown(workflow_id)
+
+            save_document(
+                workflow_id=workflow_id,
+                title=f"RFP Response for {client_name}",
+                content=markdown_content,
+                client_name=client_name,
+                document_type="rfp_response"
+            )
+            print(f"[{workflow_id}] Document record created successfully")
+
         except Exception as e:
             print(f"[{workflow_id}] Error formatting document: {e}")
             # Still mark as ready but without file
@@ -325,9 +339,95 @@ class RFPProcessorService:
                 workflow_id=workflow_id,
                 state="ready"
             )
+
+            # Still create document record even if formatting failed
+            # This ensures the RFP appears in Workflows page
+            try:
+                print(f"[{workflow_id}] Creating document record despite formatting error")
+                markdown_content = self._format_rfp_response_as_markdown(workflow_id)
+
+                save_document(
+                    workflow_id=workflow_id,
+                    title=f"RFP Response for {client_name}",
+                    content=markdown_content,
+                    client_name=client_name,
+                    document_type="rfp_response"
+                )
+                print(f"[{workflow_id}] Document record created successfully")
+            except Exception as doc_error:
+                print(f"[{workflow_id}] Error creating document record: {doc_error}")
+
             raise
 
         await asyncio.sleep(0.5)
+
+    def _format_rfp_response_as_markdown(self, workflow_id: str) -> str:
+        """
+        Convert RFP workflow responses into markdown format for document storage.
+
+        Args:
+            workflow_id: Workflow identifier
+
+        Returns:
+            Markdown formatted content
+        """
+        workflow = get_workflow(workflow_id)
+
+        if not workflow:
+            return ""
+
+        # Start with header
+        client_name = workflow.get("client_name", "Client")
+        industry = workflow.get("industry", "Not specified")
+        completed_at = workflow.get("completed_at")
+
+        markdown = f"# RFP Response for {client_name}\n\n"
+        markdown += f"**Industry**: {industry}\n\n"
+
+        if completed_at:
+            try:
+                from datetime import datetime
+                completed_date = datetime.fromisoformat(completed_at.replace('Z', '+00:00'))
+                markdown += f"**Processed**: {completed_date.strftime('%B %d, %Y')}\n\n"
+            except:
+                markdown += f"**Processed**: {completed_at}\n\n"
+
+        markdown += "---\n\n"
+
+        # Add each question and answer
+        generated_responses = workflow.get("generated_responses", [])
+        if generated_responses:
+            markdown += "## Questions & Responses\n\n"
+
+            for idx, response in enumerate(generated_responses, 1):
+                question = response.get("question", f"Question {idx}")
+                answer = response.get("answer", "No answer generated")
+
+                markdown += f"### {idx}. {question}\n\n"
+                markdown += f"{answer}\n\n"
+
+                # Add sources if available
+                sources = response.get("sources", [])
+                if sources:
+                    markdown += "**Sources**:\n"
+                    for source in sources[:3]:  # Limit to top 3 sources
+                        source_text = source.get("metadata", {}).get("source", "Unknown")
+                        score = source.get("score", 0)
+                        markdown += f"- {source_text} (relevance: {score:.2f})\n"
+                    markdown += "\n"
+
+        # Add summary statistics
+        review_result = workflow.get("review_result")
+        if review_result:
+            markdown += "---\n\n"
+            markdown += "## Quality Review\n\n"
+            markdown += f"- **Overall Quality**: {review_result.get('overall_quality', 'N/A')}\n"
+            markdown += f"- **Completeness Score**: {review_result.get('completeness_score', 0):.2%}\n"
+            markdown += f"- **High Confidence Answers**: {review_result.get('high_confidence_count', 0)}\n"
+            markdown += f"- **Medium Confidence Answers**: {review_result.get('medium_confidence_count', 0)}\n"
+            markdown += f"- **Low Confidence Answers**: {review_result.get('low_confidence_count', 0)}\n"
+
+        return markdown
 
     def process_rfp_sync(
         self,
