@@ -245,13 +245,15 @@ async def upload_rfp(
         raise HTTPException(status_code=500, detail=f"Failed to process RFP: {str(e)}")
 
 
-def process_rfp_background(workflow_id: str, rfp_text: str, client_name: str, industry: Optional[str]):
+async def process_rfp_background(workflow_id: str, rfp_text: str, client_name: str, industry: Optional[str]):
     """Background task to process RFP using new stepwise processor."""
     try:
+        print(f"[Background Task] Starting RFP processing for workflow {workflow_id}")
         processor = get_rfp_processor()
-        processor.process_rfp_sync(workflow_id, rfp_text, client_name, industry)
+        await processor.process_rfp_async(workflow_id, rfp_text, client_name, industry)
+        print(f"[Background Task] Successfully completed RFP processing for workflow {workflow_id}")
     except Exception as e:
-        print(f"Error processing RFP in background: {e}")
+        print(f"[Background Task] Error processing RFP in background: {e}")
         import traceback
         traceback.print_exc()
         # Update workflow to error state
